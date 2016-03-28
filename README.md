@@ -1,4 +1,4 @@
-A tool for generating reports from bibtex files.
+A tool for generating reports from BibTex files.
 
 
 Installation
@@ -12,7 +12,7 @@ virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/).
 
 Clone this repository (or [download
 zip](https://github.com/igordejanovic/bibreport/archive/master.zip) and unpack)
-and do.
+and do:
 
 ```
 $ python setup.py install
