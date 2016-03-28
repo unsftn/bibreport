@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Report {{yearfilter}}</title>
+  <meta charset="utf-8" />
+  <style type="text/css" media="screen">
+    h2 { font-size: 2em; margin-top: 2em}
+    h3 { font-size: 1.3em; margin-top: 2em}
+  </style>
+</head>
+<body>
+
+<h1>Report {{yearfilter}}</h1>
+
+<h2>References</h2>
+<table cellpadding="2" cellspacing="0" border="1">
+  <tr><th>No.</th><th>Work</th><th>Year</th><th>Category</th><th>Points</th></tr>
+  {% for ref in refs %}
+  <tr>
+    <td>{{loop.index}}.</td>
+    <td>{{ref|format_reference}}</td>
+    <td>{{ref.year}}</td>
+    <td>{{ref.rank}}</td>
+    <td>{{ref.rank| points}}</td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td colspan="4" align="right">Total:</td>
+    <td>{{total_points}}</td>
+  </tr>
+</table>
+
+</body>
+</html>
+
+
