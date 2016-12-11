@@ -10,6 +10,11 @@ from arpeggio import NoMatch
 import bibreport
 from bibreport.parser import parse_bibtex
 
+if sys.version < '3':
+    text = unicode
+else:
+    text = str
+
 
 class MyParser(argparse.ArgumentParser):
     """
@@ -48,6 +53,7 @@ points_table = {
     'M61': 1.5,
     'M62': 1,
     'M63': 0.5,
+    'M66': 1,
     'M71': 6,
     'M72': 3,
     'M81': 8,
@@ -69,18 +75,38 @@ def format_reference(ref):
     Filter for formating reference according to its type.
     """
     rank = ref['rank']
+
+    ret = ''
+
+    if rank != 'M66':
+        ret = ', '.join(ref['author']) + ', '
+
+    ret += '"' + ref['title'] + '"'
+
     if rank == 'M66':
-        return '"{}", Edt. {},{},{}.'\
-            .format(ref['title'],
-                    ",".join(ref['editor']),
-                    ref['publisher'],
-                    ref['year'])
+        ret += 'Edt.' + ', ' + ', '.join(ref['editor'])
+        ret += ', ' + ref['publisher']
     else:
-        return '{},"{}",{},{}.'\
-            .format(",".join(ref['author']),
-                    ref['title'],
-                    ref.get('journal', ref.get('booktitle')),
-                    ref['year'])
+        if 'journal' in ref:
+            ret += ', ' + ref['journal']
+        elif 'booktitle' in ref:
+            ret += ', ' + ref['booktitle']
+
+    if 'institution' in ref:
+        ret += ', ' + ref['institution']
+
+    if 'school' in ref:
+        ret += ', ' + ref['school']
+
+    if 'pages' in ref:
+        ret += ', pp. ' + ref['pages']
+
+    if 'doi' in ref:
+        ret += ', DOI: ' + ref['doi']
+
+    ret += ', ' + ref['year'] + '.'
+
+    return ret
 
 
 def check_keys(refs):
@@ -100,8 +126,11 @@ def check_keys(refs):
 
 def gen_html(refs, yearfilter, total_points):
 
-    # Sort references by year and than by rank
-    refs.sort(key=lambda r: "{}-{}".format(r['year'], r['rank']), reverse=True)
+    # Sort references by year and then by rank
+    def rank_rev(r):
+        return str(100 - int(r[1:]))
+    refs.sort(key=lambda r: "{}-{}".format(r['year'], rank_rev(r['rank'])),
+              reverse=True)
 
     # Initialize template engine.
     template_folder = os.path.join(os.path.dirname(bibreport.__file__),
@@ -154,6 +183,8 @@ def main():
             if args.yearfilter:
                 refs_f = list(filter(check_year(args.yearfilter), refs_f))
 
+            check_keys(refs_f)
+
             total_points = 0
             for r in refs_f:
                 # Convert author string to list
@@ -164,7 +195,7 @@ def main():
                     r['editor'] = [x.strip() for x in
                                    re.split(' and |,', r['editor'])]
                 else:
-                    print("Warning: No autor or editor for {}"\
+                    print("Warning: No autor or editor for {}"
                           .format(r['title']))
 
                 # Calculate points
@@ -174,9 +205,8 @@ def main():
                 else:
                     print("Warning: No points for paper rank {}".format(rank))
 
-            check_keys(refs_f)
             refs.extend(refs_f)
         except NoMatch as e:
-            print(unicode(e))
+            print(text(e))
 
         gen_html(refs, args.yearfilter, total_points)

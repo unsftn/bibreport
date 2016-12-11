@@ -8,14 +8,19 @@
 #######################################################################
 from __future__ import print_function, unicode_literals
 
-from arpeggio import *
+import re
+import codecs
+from arpeggio import ZeroOrMore, Optional, Combine, EOF, And, PTNodeVisitor, \
+    ParserPython, visit_parse_tree
 from arpeggio import RegExMatch as _
 
 
 # Grammar
-def bibfile():                  return ZeroOrMore([comment_entry, bibentry, comment]), EOF
+def bibfile():                  return ZeroOrMore([comment_entry, bibentry,
+                                                   comment]), EOF
 def comment_entry():            return "@comment", "{", _(r'[^}]*'), "}"
-def bibentry():                 return bibtype, "{", bibkey, ",", field, ZeroOrMore(",", field), "}"
+def bibentry():                 return bibtype, "{", bibkey, ",", field, \
+                                       ZeroOrMore(",", field), "}"
 def field():                    return fieldname, "=", fieldvalue
 def fieldvalue():               return [fieldvalue_braces, fieldvalue_quotes]
 def fieldvalue_braces():        return "{", fieldvalue_braced_content, "}"
@@ -28,7 +33,8 @@ def bibtype():                  return _(r'@\w+')
 def bibkey():                   return _(r'[^\s,]+')
 def fieldvalue_quoted_content():    return _(r'((\\")|[^"])*')
 def fieldvalue_braced_content():    return Combine(
-                                            ZeroOrMore([Optional(And("{"), fieldvalue_inner),\
+                                            ZeroOrMore([Optional(And("{"),
+                                                                 fieldvalue_inner),\
                                                         fieldvalue_part]))
 
 def fieldvalue_part():          return _(r'((\\")|[^{}])+')
@@ -96,6 +102,8 @@ class BibtexVisitor(PTNodeVisitor):
 
 
 parser = None
+
+
 def parse_bibtex(file_name, debug=False):
     global parser
     if parser is None:
@@ -106,5 +114,5 @@ def parse_bibtex(file_name, debug=False):
 
     parse_tree = parser.parse(bibtexfile_content)
 
-    return visit_parse_tree(parse_tree, BibtexVisitor(debug=debug))
-
+    return visit_parse_tree(parse_tree,
+                            BibtexVisitor(debug=debug))
